@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_ml_vision/firebase_ml_vision.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,6 +10,7 @@ class ImageLabelingScreen extends StatefulWidget {
 }
 
 class _ImageLabelingScreenState extends State<ImageLabelingScreen> {
+  late ImageLabeler _imageLabeler;
   List<String> _labels = [];
   List<String> _assetImages = [
     'assets/women.jpeg',
@@ -38,20 +39,20 @@ class _ImageLabelingScreenState extends State<ImageLabelingScreen> {
   // Label the image using Firebase ML Kit
   Future<void> _labelImage(File image) async {
     try {
-      final FirebaseVisionImage visionImage =
-          FirebaseVisionImage.fromFile(image);
-      final ImageLabeler labeler = FirebaseVision.instance.imageLabeler();
-      final List<ImageLabel> labels = await labeler.processImage(visionImage);
+      _imageLabeler = ImageLabeler(options: ImageLabelerOptions());
+      final InputImage visionImage = InputImage.fromFile(image);
+      final List<ImageLabel> labels =
+          await _imageLabeler.processImage(visionImage);
 
       setState(() {
         _labels = labels
             .map((label) =>
-                '${label.text} (${label.confidence?.toStringAsFixed(2) ?? 'N/A'})')
+                '${label.label} (${label.confidence.toStringAsFixed(2)})')
             .toList();
       });
 
       // Close the labeler to release resources
-      labeler.close();
+      _imageLabeler.close();
     } catch (e) {
       print('Error processing image for labels: $e');
     }
